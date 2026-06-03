@@ -81,7 +81,7 @@ Indexes:
 
 1. Clonar el repositorio:
 ```bash
-git clone 
+git clone https://github.com/Chencho2323/appointment-management-system
 cd appointment-management-system
 ```
 

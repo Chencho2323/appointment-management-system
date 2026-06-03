@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/axios'
 import Sidebar from '@/components/Sidebar'
@@ -32,6 +32,7 @@ export default function AppointmentsPage() {
     product_line: '',
     status: '',
   })
+  const initialized = useRef(false)
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -49,11 +50,12 @@ export default function AppointmentsPage() {
     }
 
     fetchAppointments()
+    initialized.current = true
   }, [router])
 
   // Volver a cargar citas cuando cambien los filtros
   useEffect(() => {
-    if (!loading) {
+    if (initialized.current && !loading) {
       fetchAppointments()
     }
   }, [filters, loading])

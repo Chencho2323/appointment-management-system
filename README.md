@@ -193,7 +193,8 @@ La API está documentada automáticamente con drf-spectacular (OpenAPI 3.0).
 #### Autenticación
 - `POST /api/auth/token/` - Login (obtener tokens JWT)
 - `POST /api/auth/token/refresh/` - Refrescar access token
-- `POST /api/auth/logout/` - Logout (invalidar refresh token)
+- `POST /api/appointments/register/operator/` - Registrar nuevo usuario operador
+- `POST /api/appointments/logout/` - Logout (invalidar refresh token)
 
 #### Citas
 - `GET /api/appointments/` - Listar citas (con filtros: supplier, product_line, status, date_from, date_to)

@@ -35,10 +35,32 @@ export default function ReportPage() {
     const thirtyDaysAgo = new Date(today)
     thirtyDaysAgo.setDate(today.getDate() - 30)
 
-    setDateTo(today.toISOString().split('T')[0])
-    setDateFrom(thirtyDaysAgo.toISOString().split('T')[0])
+    const dateFromValue = today.toISOString().split('T')[0]
+    const dateToValue = thirtyDaysAgo.toISOString().split('T')[0]
 
-    fetchReport()
+    setDateTo(dateFromValue)
+    setDateFrom(dateToValue)
+
+    // Llamar a fetchReport con las fechas ya establecidas
+    const fetchInitialReport = async () => {
+      setLoading(true)
+      setError('')
+
+      try {
+        const response = await api.get(`/appointments/report/?date_from=${dateToValue}&date_to=${dateFromValue}`)
+        setReportData(response.data)
+      } catch (err: any) {
+        if (err.response?.status === 401) {
+          router.push('/login')
+        } else {
+          setError('Error al cargar el reporte')
+        }
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchInitialReport()
   }, [router])
 
   const fetchReport = async () => {

@@ -1,7 +1,3 @@
-"""
-Configuración ASGI para el sistema de gestión de citas.
-"""
-
 import os
 
 from django.core.asgi import get_asgi_application

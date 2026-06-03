@@ -87,7 +87,15 @@ export default function AppointmentsPage() {
       await api.delete(`/appointments/${id}/`)
       fetchAppointments()
     } catch (err: any) {
-      setError('Error al eliminar cita')
+      let errorMessage = 'Error al eliminar cita'
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Cita no encontrada'
+      } else if (err.response?.status === 400) {
+        errorMessage = 'No se puede eliminar esta cita en su estado actual'
+      }
+      setError(errorMessage)
     }
   }
 

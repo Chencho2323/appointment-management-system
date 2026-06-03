@@ -94,13 +94,33 @@ export default function AppointmentFormPage() {
         router.push('/appointments')
       }, 1500)
     } catch (err: any) {
-      const errorMessage = err.response?.data || {}
-      if (typeof errorMessage === 'object') {
-        const errors = Object.entries(errorMessage).map(([key, value]) => `${key}: ${value}`).join(', ')
-        setError(errors)
-      } else {
-        setError('Error al guardar la cita')
+      let errorMessage = 'Error al guardar la cita'
+      
+      if (err.response) {
+        if (err.response.status === 404) {
+          errorMessage = 'Cita no encontrada'
+        } else if (err.response.status === 400) {
+          const errorData = err.response?.data
+          if (typeof errorData === 'object') {
+            const errors = Object.entries(errorData).map(([key, value]) => `${key}: ${value}`).join(', ')
+            errorMessage = errors
+          } else {
+            errorMessage = errorData || 'Error de validación'
+          }
+        } else if (err.response.status === 401) {
+          errorMessage = 'No autorizado. Por favor inicia sesión nuevamente.'
+        } else if (err.response.data?.error) {
+          errorMessage = err.response.data.error
+        }
+      } else if (err.message) {
+        if (err.message.includes('Network Error') || err.message.includes('ECONNREFUSED')) {
+          errorMessage = 'No se puede conectar con el servidor. Por favor verifica tu conexión a internet.'
+        } else {
+          errorMessage = `Error: ${err.message}`
+        }
       }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

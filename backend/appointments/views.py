@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db import connection
 from django.utils import timezone
-from datetime import datetime
+from datetime import datetime, timedelta
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 from drf_spectacular.types import OpenApiTypes
 from .models import Appointment
@@ -73,6 +73,9 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         },
         tags=['Citas']
     )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
     def get_queryset(self):
         """
         Filtrar citas basado en parámetros de consulta.
@@ -274,6 +277,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         if date_to:
             try:
                 date_to_parsed = datetime.strptime(date_to, '%Y-%m-%d').date()
+                # Agregar 1 día para incluir el día completo de date_to
+                date_to_parsed = date_to_parsed + timedelta(days=1)
             except ValueError:
                 return Response(
                     {'error': 'Formato de fecha inválido para date_to. Use YYYY-MM-DD'},
@@ -294,13 +299,13 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
         # Agregar filtros de fecha si se proporcionan
         if date_from_parsed and date_to_parsed:
-            query += " AND scheduled_at BETWEEN %s AND %s"
+            query += " AND scheduled_at >= %s AND scheduled_at < %s"
             params.extend([date_from_parsed, date_to_parsed])
         elif date_from_parsed:
             query += " AND scheduled_at >= %s"
             params.append(date_from_parsed)
         elif date_to_parsed:
-            query += " AND scheduled_at <= %s"
+            query += " AND scheduled_at < %s"
             params.append(date_to_parsed)
 
         query += " GROUP BY product_line ORDER BY product_line;"

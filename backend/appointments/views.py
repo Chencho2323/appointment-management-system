@@ -9,6 +9,7 @@ from django.db import connection
 from django.utils import timezone
 from datetime import datetime
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+from drf_spectacular.types import OpenApiTypes
 from .models import Appointment
 from .serializers import (
     AppointmentSerializer,
@@ -31,55 +32,164 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             return AppointmentListSerializer
         return AppointmentSerializer
 
+    @extend_schema(
+        summary='Listar citas',
+        description='Retorna una lista de citas con filtros opcionales por fecha, proveedor, línea de producto y estado.',
+        parameters=[
+            OpenApiParameter(
+                name='date_from',
+                type=OpenApiTypes.DATE,
+                required=False,
+                description='Fecha inicial del filtro (formato YYYY-MM-DD)'
+            ),
+            OpenApiParameter(
+                name='date_to',
+                type=OpenApiTypes.DATE,
+                required=False,
+                description='Fecha final del filtro (formato YYYY-MM-DD)'
+            ),
+            OpenApiParameter(
+                name='supplier',
+                type=OpenApiTypes.STR,
+                required=False,
+                description='Filtrar por proveedor (A, B, C)'
+            ),
+            OpenApiParameter(
+                name='product_line',
+                type=OpenApiTypes.STR,
+                required=False,
+                description='Filtrar por línea de producto'
+            ),
+            OpenApiParameter(
+                name='status',
+                type=OpenApiTypes.STR,
+                required=False,
+                description='Filtrar por estado (Programada, En Proceso, Entregada, Cancelada)'
+            ),
+        ],
+        responses={
+            200: AppointmentListSerializer,
+            401: OpenApiResponse(description='No autenticado')
+        },
+        tags=['Citas']
+    )
     def get_queryset(self):
         """
         Filtrar citas basado en parámetros de consulta.
         """
         queryset = Appointment.objects.all()
-        
+
         # Filtrar por rango de fechas
         date_from = self.request.query_params.get('date_from')
         date_to = self.request.query_params.get('date_to')
-        
+
         if date_from:
             queryset = queryset.filter(scheduled_at__gte=date_from)
         if date_to:
             queryset = queryset.filter(scheduled_at__lte=date_to)
-        
+
         # Filtrar por supplier
         supplier = self.request.query_params.get('supplier')
         if supplier:
             queryset = queryset.filter(supplier=supplier)
-        
+
         # Filtrar por línea de producto
         product_line = self.request.query_params.get('product_line')
         if product_line:
             queryset = queryset.filter(product_line=product_line)
-        
+
         # Filtrar por estado
         status_param = self.request.query_params.get('status')
         if status_param:
             queryset = queryset.filter(status=status_param)
-        
+
         return queryset
 
+    @extend_schema(
+        summary='Crear cita',
+        description='Crea una nueva cita con los datos proporcionados. Valida que la fecha programada no sea en el pasado y que el estado sea válido.',
+        request=AppointmentSerializer,
+        responses={
+            201: AppointmentSerializer,
+            400: OpenApiResponse(description='Error de validación'),
+            401: OpenApiResponse(description='No autenticado')
+        },
+        tags=['Citas']
+    )
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    @extend_schema(
+        summary='Obtener detalle de cita',
+        description='Retorna los detalles completos de una cita específica por su ID.',
+        responses={
+            200: AppointmentSerializer,
+            404: OpenApiResponse(description='Cita no encontrada'),
+            401: OpenApiResponse(description='No autenticado')
+        },
+        tags=['Citas']
+    )
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    @extend_schema(
+        summary='Actualizar cita',
+        description='Actualiza todos los campos de una cita existente. Valida transiciones de estado y fechas.',
+        request=AppointmentSerializer,
+        responses={
+            200: AppointmentSerializer,
+            400: OpenApiResponse(description='Error de validación'),
+            404: OpenApiResponse(description='Cita no encontrada'),
+            401: OpenApiResponse(description='No autenticado')
+        },
+        tags=['Citas']
+    )
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @extend_schema(
+        summary='Actualizar parcialmente cita',
+        description='Actualiza parcialmente los campos de una cita existente. Valida transiciones de estado y fechas.',
+        request=AppointmentSerializer,
+        responses={
+            200: AppointmentSerializer,
+            400: OpenApiResponse(description='Error de validación'),
+            404: OpenApiResponse(description='Cita no encontrada'),
+            401: OpenApiResponse(description='No autenticado')
+        },
+        tags=['Citas']
+    )
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
+    @extend_schema(
+        summary='Eliminar cita (soft-delete)',
+        description='Realiza un soft-delete de la cita cambiando su estado a "Cancelada". No permite cancelar citas ya canceladas o entregadas.',
+        responses={
+            204: OpenApiResponse(description='Cita cancelada exitosamente'),
+            400: OpenApiResponse(description='No se puede cancelar una cita con estado Cancelada o Entregada'),
+            404: OpenApiResponse(description='Cita no encontrada'),
+            401: OpenApiResponse(description='No autenticado')
+        },
+        tags=['Citas']
+    )
     def destroy(self, request, *args, **kwargs):
         """
         Soft-delete: cambiar status a 'Cancelada' en lugar de eliminar físicamente.
         """
         appointment = self.get_object()
-        
+
         # Verificar si ya está cancelada o entregada
         if appointment.status in ['Cancelada', 'Entregada']:
             return Response(
                 {'error': f'No se puede cancelar una cita con estado "{appointment.status}"'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Cambiar status a Cancelada
         appointment.status = 'Cancelada'
         appointment.save()
-        
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(

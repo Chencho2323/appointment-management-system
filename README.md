@@ -81,7 +81,7 @@ Indexes:
 
 1. Clonar el repositorio:
 ```bash
-git clone 
+git clone https://github.com/Chencho2323/appointment-management-system
 cd appointment-management-system
 ```
 
@@ -192,19 +192,25 @@ La API está documentada automáticamente con drf-spectacular (OpenAPI 3.0).
 ### Endpoints Principales
 
 #### Autenticación
-- `POST /api/auth/token/` - Login (obtener tokens JWT)
-- `POST /api/auth/token/refresh/` - Refrescar access token
-- `POST /api/appointments/register/operator/` - Registrar nuevo usuario operador
-- `POST /api/appointments/logout/` - Logout (invalidar refresh token)
+
+| Método | Endpoint | Request Body | Response | Descripción |
+|--------|-----------|--------------|----------|-------------|
+| POST | `/api/auth/token/` | `{username, password}` | `{access, refresh}` | Login (obtener tokens JWT) |
+| POST | `/api/auth/token/refresh/` | `{refresh}` | `{access}` | Refrescar access token |
+| POST | `/api/appointments/register/operator/` | `{username, password}` | `{message, username}` | Registrar nuevo usuario operador |
+| POST | `/api/auth/logout/` | `{refresh}` | `{message}` | Logout (invalidar refresh token) |
 
 #### Citas
-- `GET /api/appointments/` - Listar citas (con filtros: supplier, product_line, status, date_from, date_to)
-- `POST /api/appointments/` - Crear nueva cita
-- `GET /api/appointments/{id}/` - Obtener detalle de cita
-- `PUT /api/appointments/{id}/` - Actualizar cita
-- `DELETE /api/appointments/{id}/` - Eliminar cita (soft-delete: status='Cancelada')
-- `GET /api/appointments/dashboard/` - Estadísticas del dashboard
-- `GET /api/appointments/report/` - Reporte de tiempos por línea de producto (date_from/date_to opcionales)
+
+| Método | Endpoint | Request Body | Response | Descripción |
+|--------|-----------|--------------|----------|-------------|
+| GET | `/api/appointments/` | Query params: `supplier`, `product_line`, `status`, `date_from`, `date_to` | `{results: [...], count}` | Listar citas con filtros opcionales |
+| POST | `/api/appointments/` | `{scheduled_at, delivered_at?, status, supplier, product_line, observations?}` | `{id, ...}` | Crear nueva cita |
+| GET | `/api/appointments/{id}/` | - | `{id, ...}` | Obtener detalle de cita |
+| PUT | `/api/appointments/{id}/` | `{scheduled_at?, delivered_at?, status?, supplier?, product_line?, observations?}` | `{id, ...}` | Actualizar cita |
+| DELETE | `/api/appointments/{id}/` | - | - | Eliminar cita (soft-delete: status='Cancelada') |
+| GET | `/api/appointments/dashboard/` | - | `{total_appointments, today_appointments, status_counts}` | Estadísticas del dashboard |
+| GET | `/api/appointments/report/` | Query params: `date_from?`, `date_to?` | `[{product_line, total_deliveries, avg_hours, avg_minutes}]` | Reporte de tiempos por línea de producto |
 
 ## Pruebas Unitarias
 

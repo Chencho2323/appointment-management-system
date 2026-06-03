@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/axios'
 import Sidebar from '@/components/Sidebar'
@@ -32,6 +32,9 @@ export default function AppointmentsPage() {
     product_line: '',
     status: '',
   })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+  const initialized = useRef(false)
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -49,14 +52,15 @@ export default function AppointmentsPage() {
     }
 
     fetchAppointments()
+    initialized.current = true
   }, [router])
 
-  // Volver a cargar citas cuando cambien los filtros
+  // Volver a cargar citas cuando cambian los filtros o la página
   useEffect(() => {
-    if (!loading) {
+    if (initialized.current) {
       fetchAppointments()
     }
-  }, [filters, loading])
+  }, [filters, currentPage])
 
   const fetchAppointments = async () => {
     try {
@@ -64,9 +68,11 @@ export default function AppointmentsPage() {
       Object.entries(filters).forEach(([key, value]) => {
         if (value) params.append(key, value)
       })
+      params.append('page', currentPage.toString())
 
       const response = await api.get(`/appointments/?${params}`)
       setAppointments(response.data.results || response.data)
+      setTotalCount(response.data.count || 0)
     } catch (err: any) {
       if (err.response?.status === 401) {
         router.push('/login')
@@ -85,7 +91,15 @@ export default function AppointmentsPage() {
       await api.delete(`/appointments/${id}/`)
       fetchAppointments()
     } catch (err: any) {
-      setError('Error al eliminar cita')
+      let errorMessage = 'Error al eliminar cita'
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error
+      } else if (err.response?.status === 404) {
+        errorMessage = 'Cita no encontrada'
+      } else if (err.response?.status === 400) {
+        errorMessage = 'No se puede eliminar esta cita en su estado actual'
+      }
+      setError(errorMessage)
     }
   }
 

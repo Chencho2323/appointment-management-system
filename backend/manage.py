@@ -1,11 +1,9 @@
 #!/usr/bin/env python
-"""Utilidad de línea de comandos de Django para tareas administrativas."""
 import os
 import sys
 
 
 def main():
-    """Ejecutar tareas administrativas."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
     try:
         from django.core.management import execute_from_command_line

@@ -29,7 +29,7 @@ export default function Sidebar({ isOpen = true, onToggle }: SidebarProps) {
       
       if (refreshToken) {
         // Llamar al endpoint de logout para blacklisear el refresh token
-        await api.post('/appointments/logout/', { refresh: refreshToken })
+        await api.post('/auth/logout/', { refresh: refreshToken })
       }
     } catch (error) {
       console.error('Error al cerrar sesión:', error)
@@ -44,7 +44,7 @@ export default function Sidebar({ isOpen = true, onToggle }: SidebarProps) {
   const handleNavigation = (path: string) => {
     router.push(path)
     // Cerrar el menú en móvil después de navegar
-    if (window.innerWidth < 1024) {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       onToggle?.()
     }
   }

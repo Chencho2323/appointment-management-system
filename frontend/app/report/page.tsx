@@ -22,6 +22,8 @@ export default function ReportPage() {
   const [error, setError] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [autoRefresh, setAutoRefresh] = useState(false)
+  const [refreshInterval, setRefreshInterval] = useState(30)
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -35,11 +37,11 @@ export default function ReportPage() {
     const thirtyDaysAgo = new Date(today)
     thirtyDaysAgo.setDate(today.getDate() - 30)
 
-    const dateFromValue = today.toISOString().split('T')[0]
-    const dateToValue = thirtyDaysAgo.toISOString().split('T')[0]
+    const dateFromValue = thirtyDaysAgo.toISOString().split('T')[0]
+    const dateToValue = today.toISOString().split('T')[0]
 
-    setDateTo(dateFromValue)
-    setDateFrom(dateToValue)
+    setDateFrom(dateFromValue)
+    setDateTo(dateToValue)
 
     // Llamar a fetchReport con las fechas ya establecidas
     const fetchInitialReport = async () => {
@@ -47,7 +49,7 @@ export default function ReportPage() {
       setError('')
 
       try {
-        const response = await api.get(`/appointments/report/?date_from=${dateToValue}&date_to=${dateFromValue}`)
+        const response = await api.get(`/appointments/report/?date_from=${dateFromValue}&date_to=${dateToValue}`)
         setReportData(response.data)
       } catch (err: any) {
         if (err.response?.status === 401) {
@@ -62,6 +64,23 @@ export default function ReportPage() {
 
     fetchInitialReport()
   }, [router])
+
+  // Auto-refresh del reporte
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null
+
+    if (autoRefresh) {
+      interval = setInterval(() => {
+        fetchReport()
+      }, refreshInterval * 1000)
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval)
+      }
+    }
+  }, [autoRefresh, refreshInterval, dateFrom, dateTo])
 
   const fetchReport = async () => {
     if (!dateFrom || !dateTo) return
@@ -106,7 +125,7 @@ export default function ReportPage() {
         </div>
 
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
               <label htmlFor="dateFrom" className="block text-sm font-medium text-gray-700 mb-2">
                 Fecha Desde
@@ -131,6 +150,21 @@ export default function ReportPage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-black"
               />
             </div>
+            <div>
+              <label htmlFor="refreshInterval" className="block text-sm font-medium text-gray-700 mb-2">
+                Intervalo (segundos)
+              </label>
+              <input
+                id="refreshInterval"
+                type="number"
+                min="5"
+                max="300"
+                value={refreshInterval}
+                onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 text-black"
+                disabled={!autoRefresh}
+              />
+            </div>
             <div className="flex space-x-2">
               <button
                 onClick={handleRefresh}
@@ -139,6 +173,16 @@ export default function ReportPage() {
               >
                 <RefreshCw className={`w-5 h-5 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 {loading ? 'Cargando...' : 'Actualizar'}
+              </button>
+              <button
+                onClick={() => setAutoRefresh(!autoRefresh)}
+                className={`flex-1 py-2 px-4 rounded-lg transition flex items-center justify-center ${
+                  autoRefresh
+                    ? 'bg-green-600 text-white hover:bg-green-700'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+              >
+                {autoRefresh ? 'Auto-Refresh ON' : 'Auto-Refresh OFF'}
               </button>
             </div>
           </div>

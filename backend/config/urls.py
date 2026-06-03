@@ -8,7 +8,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
-from appointments.auth_views import logout_user
+from users.views import logout_user
 
 urlpatterns = [
     path('admin/', admin.site.urls),

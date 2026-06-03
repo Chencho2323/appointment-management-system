@@ -32,6 +32,8 @@ export default function AppointmentsPage() {
     product_line: '',
     status: '',
   })
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
   const initialized = useRef(false)
 
   useEffect(() => {
@@ -53,12 +55,12 @@ export default function AppointmentsPage() {
     initialized.current = true
   }, [router])
 
-  // Volver a cargar citas cuando cambien los filtros
+  // Volver a cargar citas cuando cambian los filtros o la página
   useEffect(() => {
     if (initialized.current) {
       fetchAppointments()
     }
-  }, [filters])
+  }, [filters, currentPage])
 
   const fetchAppointments = async () => {
     try {
@@ -66,9 +68,11 @@ export default function AppointmentsPage() {
       Object.entries(filters).forEach(([key, value]) => {
         if (value) params.append(key, value)
       })
+      params.append('page', currentPage.toString())
 
       const response = await api.get(`/appointments/?${params}`)
       setAppointments(response.data.results || response.data)
+      setTotalCount(response.data.count || 0)
     } catch (err: any) {
       if (err.response?.status === 401) {
         router.push('/login')

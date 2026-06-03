@@ -170,7 +170,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         description='Realiza un soft-delete de la cita cambiando su estado a "Cancelada". No permite cancelar citas ya canceladas o entregadas.',
         responses={
             204: OpenApiResponse(description='Cita cancelada exitosamente'),
-            400: OpenApiResponse(description='No se puede cancelar una cita con estado Cancelada o Entregada'),
+            409: OpenApiResponse(description='No se puede cancelar una cita con estado Cancelada o Entregada'),
             404: OpenApiResponse(description='Cita no encontrada'),
             401: OpenApiResponse(description='No autenticado')
         },
@@ -186,7 +186,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         if appointment.status in ['Cancelada', 'Entregada']:
             return Response(
                 {'error': f'No se puede cancelar una cita con estado "{appointment.status}"'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_409_CONFLICT
             )
 
         # Cambiar status a Cancelada

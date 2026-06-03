@@ -4,7 +4,7 @@ Configuración de URL para la aplicación de citas.
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import AppointmentViewSet
-from .auth_views import register_operator
+from users.views import register_operator
 
 router = DefaultRouter()
 router.register(r'', AppointmentViewSet, basename='appointment')

@@ -15,7 +15,7 @@ export default function Navbar() {
       
       if (refreshToken) {
         // Llamar al endpoint de logout para blacklisear el refresh token
-        await api.post('/appointments/logout/', { refresh: refreshToken })
+        await api.post('/auth/logout/', { refresh: refreshToken })
       }
     } catch (error) {
       console.error('Error al cerrar sesión:', error)

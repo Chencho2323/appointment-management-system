@@ -46,9 +46,16 @@ class AppointmentSerializer(serializers.ModelSerializer):
         """
         Validar reglas de negocio.
         """
+        instance = self.instance
         scheduled_at = data.get('scheduled_at')
         delivered_at = data.get('delivered_at')
         status = data.get('status')
+
+        # Para actualizaciones parciales (PATCH), obtener valores del instance si no vienen en data
+        if instance:
+            scheduled_at = scheduled_at if scheduled_at is not None else instance.scheduled_at
+            delivered_at = delivered_at if delivered_at is not None else instance.delivered_at
+            status = status if status is not None else instance.status
 
         # No se puede crear cita con fecha pasada
         if scheduled_at and scheduled_at < timezone.now():

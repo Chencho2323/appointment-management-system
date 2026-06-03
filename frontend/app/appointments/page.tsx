@@ -55,10 +55,10 @@ export default function AppointmentsPage() {
 
   // Volver a cargar citas cuando cambien los filtros
   useEffect(() => {
-    if (initialized.current && !loading) {
+    if (initialized.current) {
       fetchAppointments()
     }
-  }, [filters, loading])
+  }, [filters])
 
   const fetchAppointments = async () => {
     try {

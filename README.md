@@ -198,7 +198,7 @@ La API está documentada automáticamente con drf-spectacular (OpenAPI 3.0).
 | POST | `/api/auth/token/` | `{username, password}` | `{access, refresh}` | Login (obtener tokens JWT) |
 | POST | `/api/auth/token/refresh/` | `{refresh}` | `{access}` | Refrescar access token |
 | POST | `/api/appointments/register/operator/` | `{username, password}` | `{message, username}` | Registrar nuevo usuario operador |
-| POST | `/api/appointments/logout/` | `{refresh}` | `{message}` | Logout (invalidar refresh token) |
+| POST | `/api/auth/logout/` | `{refresh}` | `{message}` | Logout (invalidar refresh token) |
 
 #### Citas
 

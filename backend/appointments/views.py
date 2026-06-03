@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.db import connection
 from django.utils import timezone
 from datetime import datetime
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
 from .models import Appointment
 from .serializers import (
     AppointmentSerializer,
@@ -81,6 +82,15 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @extend_schema(
+        summary='Obtener estadísticas del dashboard',
+        description='Retorna estadísticas resumidas del dashboard incluyendo total de citas, citas de hoy, y conteos por estado.',
+        responses={
+            200: OpenApiResponse(description='Estadísticas del dashboard obtenidas exitosamente'),
+            401: OpenApiResponse(description='No autenticado')
+        },
+        tags=['Citas']
+    )
     @action(detail=False, methods=['get'])
     def dashboard(self, request):
         """
@@ -91,20 +101,44 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         today_appointments = Appointment.objects.filter(
             scheduled_at__date=today
         ).count()
-        
+
         # Contar por estado
         status_counts = {}
         for status_choice in Appointment.STATUS_CHOICES:
             status_name = status_choice[0]
             count = Appointment.objects.filter(status=status_name).count()
             status_counts[status_name] = count
-        
+
         return Response({
             'total_appointments': total_appointments,
             'today_appointments': today_appointments,
             'status_counts': status_counts,
         })
 
+    @extend_schema(
+        summary='Generar reporte de tiempos de entrega',
+        description='Genera un reporte en tiempo real con consulta SQL nativa que calcula el tiempo promedio de entrega agrupado por línea de producto. Se puede filtrar por rango de fechas.',
+        parameters=[
+            OpenApiParameter(
+                name='date_from',
+                type=str,
+                required=False,
+                description='Fecha inicial del filtro (formato YYYY-MM-DD)'
+            ),
+            OpenApiParameter(
+                name='date_to',
+                type=str,
+                required=False,
+                description='Fecha final del filtro (formato YYYY-MM-DD)'
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(description='Reporte generado exitosamente'),
+            400: OpenApiResponse(description='Error en el formato de las fechas'),
+            401: OpenApiResponse(description='No autenticado')
+        },
+        tags=['Citas']
+    )
     @action(detail=False, methods=['get'])
     def report(self, request):
         """
@@ -113,11 +147,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         """
         date_from = request.query_params.get('date_from')
         date_to = request.query_params.get('date_to')
-        
+
         # Parsear fechas si se proporcionan
         date_from_parsed = None
         date_to_parsed = None
-        
+
         if date_from:
             try:
                 date_from_parsed = datetime.strptime(date_from, '%Y-%m-%d').date()
@@ -126,7 +160,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     {'error': 'Formato de fecha inválido para date_from. Use YYYY-MM-DD'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-        
+
         if date_to:
             try:
                 date_to_parsed = datetime.strptime(date_to, '%Y-%m-%d').date()
@@ -135,19 +169,19 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                     {'error': 'Formato de fecha inválido para date_to. Use YYYY-MM-DD'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-        
+
         # Construir consulta SQL dinámicamente
         query = """
-            SELECT 
+            SELECT
                 product_line,
                 COUNT(*) AS total_deliveries,
                 AVG(EXTRACT(EPOCH FROM (delivered_at - scheduled_at)) / 3600) AS avg_hours
             FROM appointments_appointment
             WHERE status = 'Entregada'
         """
-        
+
         params = []
-        
+
         # Agregar filtros de fecha si se proporcionan
         if date_from_parsed and date_to_parsed:
             query += " AND scheduled_at BETWEEN %s AND %s"
@@ -158,13 +192,13 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         elif date_to_parsed:
             query += " AND scheduled_at <= %s"
             params.append(date_to_parsed)
-        
+
         query += " GROUP BY product_line ORDER BY product_line;"
-        
+
         with connection.cursor() as cursor:
             cursor.execute(query, params)
             rows = cursor.fetchall()
-        
+
         # Formatear resultados
         results = []
         for row in rows:
@@ -176,6 +210,6 @@ class AppointmentViewSet(viewsets.ModelViewSet):
                 'avg_hours': round(avg_hours, 2) if avg_hours else 0,
                 'avg_minutes': round(avg_minutes, 2) if avg_minutes else 0,
             })
-        
+
         serializer = ReportSerializer(results, many=True)
         return Response(serializer.data)

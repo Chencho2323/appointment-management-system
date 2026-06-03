@@ -59,6 +59,7 @@ erDiagram
         int updated_by FK
     }
     USER ||--o{ APPOINTMENT : "crea"
+    USER ||--o{ APPOINTMENT : "actualiza"
 ```
 
 Indexes:
@@ -308,16 +309,6 @@ Se eligió Next.js 14 con App Router en lugar de otras opciones como React Route
 - **Server Components**: Permite usar Server Components por defecto, reduciendo el bundle size del cliente y mejorando el rendimiento.
 - **Streaming**: Soporte nativo de streaming para mejorar la percepción de carga en conexiones lentas.
 
-### PostgreSQL vs Otras Bases de Datos
-
-Se eligió PostgreSQL en lugar de MySQL, SQLite u otras opciones:
-
-- **Soporte nativo de UUID**: PostgreSQL tiene soporte nativo para UUID como tipo de dato, lo que es ideal para claves primarias no secuenciales y distribuidas.
-- **Índices parciales**: PostgreSQL permite índices parciales (índices con condiciones WHERE), útiles para optimizar queries específicos como reportes filtrados por estado.
-- **EXTRACT/EPOCH en SQL nativo**: Funciones nativas para manipulación de fechas y tiempos, esenciales para el cálculo de tiempos promedio de entrega en el reporte.
-- **Full-text search**: Soporte nativo de búsqueda de texto completo para futuras expansiones.
-- **JSONB**: Soporte nativo de JSON binario para campos flexibles si se requiere en el futuro.
-- **ACID completo**: Cumplimiento estricto de propiedades ACID para integridad de datos transaccionales.
 
 ### Separación en Apps users y appointments
 

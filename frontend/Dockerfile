@@ -1,24 +1,19 @@
-# Stage 1: deps
-FROM node:18-alpine AS deps
+FROM node:18-alpine
+
 WORKDIR /app
+
+# Copiar archivos de dependencias
 COPY package*.json ./
+
+# Instalar dependencias
 RUN npm install
 
-# Stage 2: builder
-FROM deps AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copiar el resto del código
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
 
-# Stage 3: runner
-FROM node:18-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-RUN mkdir -p ./public
 EXPOSE 3000
-CMD ["node", "server.js"]
+
+ENV PORT=3000
+ENV NODE_ENV=development
+
+CMD ["npm", "run", "dev"]

@@ -1,6 +1,6 @@
 # Diagrama de Arquitectura - Sistema de Gestión de Citas
 
-## 📐 Arquitectura General del Sistema
+## Arquitectura General del Sistema
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -43,6 +43,11 @@
 │  │  └── wsgi.py (Servidor WSGI)                              │  │
 │  └───────────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────────┐  │
+│  │  App: users                                                │  │
+│  │  ├── models.py (Custom User model - AbstractUser)         │  │
+│  │  └── migrations/ (Migraciones de users)                   │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────────────┐  │
 │  │  App: appointments                                         │  │
 │  │  ├── models.py (Modelo Appointment)                       │  │
 │  │  ├── serializers.py (Validación + conversión JSON)        │  │
@@ -53,7 +58,8 @@
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │  Autenticación JWT                                        │  │
 │  │  ├── POST /api/auth/token/ (Login)                        │  │
-│  │  └── POST /api/auth/token/refresh/ (Refresh)               │  │
+│  │  ├── POST /api/auth/token/refresh/ (Refresh)               │  │
+│  │  └── POST /api/auth/logout/ (Logout con blacklist)        │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────┬───────────────────────────────────┘
                               │ SQL (PostgreSQL)
@@ -63,33 +69,35 @@
 │                   Puerto: 5432 (Docker)                         │
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │  Tabla: appointments_appointment                           │  │
-│  │  ├── id (PK, Auto-increment)                              │  │
+│  │  ├── id (PK, UUID)                                        │  │
 │  │  ├── scheduled_at (DateTime)                              │  │
 │  │  ├── delivered_at (DateTime, nullable)                    │  │
 │  │  ├── status (Varchar: Programada/En Proceso/Entregada/...) │  │
-│  │  ├── provider (Varchar)                                   │  │
-│  │  ├── product_line (Varchar)                               │  │
-│  │  ├── sub_product_line (Varchar)                           │  │
-│  │  ├── notes (Text)                                         │  │
+│  │  ├── supplier (Varchar: A/B/C)                           │  │
+│  │  ├── product_line (Varchar: Camisetas/Pantalones/...)    │  │
+│  │  ├── observations (Text)                                  │  │
 │  │  ├── created_at (DateTime)                                │  │
 │  │  ├── updated_at (DateTime)                                │  │
-│  │  ├── created_by (FK → User)                               │  │
-│  │  └── updated_by (FK → User)                               │  │
+│  │  ├── created_by (FK → users_user)                         │  │
+│  │  └── updated_by (FK → users_user)                         │  │
 │  └───────────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────────┐  │
-│  │  Tabla: auth_user (Django default)                        │  │
+│  │  Tabla: users_user (Custom User model)                    │  │
 │  │  ├── id (PK)                                              │  │
 │  │  ├── username                                             │  │
 │  │  ├── password (hashed)                                    │  │
 │  │  ├── email                                                │  │
-│  │  └── ...                                                  │  │
+│  │  ├── first_name                                           │  │
+│  │  ├── last_name                                            │  │
+│  │  ├── is_staff                                             │  │
+│  │  └── is_superuser                                         │  │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔄 Flujo de Autenticación
+## Flujo de Autenticación
 
 ```
 ┌──────────┐                    ┌──────────┐                    ┌──────────┐
@@ -138,7 +146,7 @@
 
 ---
 
-## 🔁 Flujo de Refresh Token (cuando expira access_token)
+## Flujo de Refresh Token (cuando expira access_token)
 
 ```
 ┌──────────┐                    ┌──────────┐                    ┌──────────┐
@@ -182,7 +190,7 @@
 
 ---
 
-## 📊 Flujo de Creación de Cita
+## Flujo de Creación de Cita
 
 ```
 ┌──────────┐                    ┌──────────┐                    ┌──────────┐
@@ -196,7 +204,7 @@
       │<─────────────────────────────┤                              │
       │                              │                              │
       │ 3. Llena formulario          │                              │
-      │    (scheduled_at, provider,  │                              │
+      │    (scheduled_at, supplier,  │                              │
       │     product_line, etc.)       │                              │
       ├─────────────────────────────>│                              │
       │                              │                              │
@@ -237,7 +245,7 @@
 
 ---
 
-## 📈 Flujo de Dashboard con Filtro por Estado
+## Flujo de Dashboard con Filtro por Estado
 
 ```
 ┌──────────┐                    ┌──────────┐                    ┌──────────┐
@@ -279,7 +287,7 @@
 
 ---
 
-## 🗂️ Estructura de Archivos (Árbol)
+## Estructura de Archivos (Árbol)
 
 ```
 appointment-management-system/
@@ -314,6 +322,14 @@ appointment-management-system/
 │       └── migrations/           # Migraciones DB
 │           └── 0001_initial.py   # Migración inicial
 │
+│   └── users/                    # App de usuarios personalizados
+│       ├── __init__.py
+│       ├── admin.py              # Configuración admin Django
+│       ├── apps.py               # Clase de configuración
+│       ├── models.py             # Custom User model (AbstractUser)
+│       └── migrations/           # Migraciones DB
+│           └── 0001_initial.py   # Migración inicial
+│
 └── frontend/                      # Frontend Next.js
     ├── package.json               # Dependencias Node.js
     ├── tsconfig.json              # Configuración TypeScript
@@ -338,28 +354,30 @@ appointment-management-system/
     │       └── page.tsx
     │
     └── components/             # Componentes React
-        └── Navbar.tsx          # Barra navegación
+        ├── Navbar.tsx          # Barra navegación
+        └── Sidebar.tsx         # Sidebar con logout
 ```
 
 ---
 
-## 🔗 Mapeo de Endpoints a Archivos
+## Mapeo de Endpoints a Archivos
 
 | Endpoint | Método | Archivo Backend | Función | Archivo Frontend |
 |-----------|--------|-----------------|---------|-----------------|
 | `/api/auth/token/` | POST | `config/urls.py` → Simple JWT | Login | `app/login/page.tsx` |
 | `/api/auth/token/refresh/` | POST | `config/urls.py` → Simple JWT | Refresh token | `lib/axios.ts` (interceptor) |
+| `/api/auth/logout/` | POST | `config/urls.py` → Custom View | Logout (blacklist) | `components/Sidebar.tsx` |
 | `/api/appointments/` | GET | `appointments/views.py` → `AppointmentViewSet.list` | Listar citas | `app/appointments/page.tsx` |
 | `/api/appointments/` | POST | `appointments/views.py` → `AppointmentViewSet.create` | Crear cita | `app/appointments/[id]/page.tsx` |
 | `/api/appointments/{id}/` | GET | `appointments/views.py` → `AppointmentViewSet.retrieve` | Obtener cita | `app/appointments/[id]/page.tsx` |
 | `/api/appointments/{id}/` | PUT | `appointments/views.py` → `AppointmentViewSet.update` | Actualizar cita | `app/appointments/[id]/page.tsx` |
-| `/api/appointments/{id}/` | DELETE | `appointments/views.py` → `AppointmentViewSet.destroy` | Eliminar cita | `app/appointments/page.tsx` |
+| `/api/appointments/{id}/` | DELETE | `appointments/views.py` → `AppointmentViewSet.destroy` | Eliminar cita (soft-delete) | `app/appointments/page.tsx` |
 | `/api/appointments/dashboard/` | GET | `appointments/views.py` → `AppointmentViewSet.dashboard` | Estadísticas | `app/dashboard/page.tsx` |
-| `/api/appointments/report/` | GET | `appointments/views.py` → `AppointmentViewSet.report` | Reporte tiempos | `app/report/page.tsx` |
+| `/api/appointments/report/` | GET | `appointments/views.py` → `AppointmentViewSet.report` | Reporte tiempos por línea de producto | `app/report/page.tsx` |
 
 ---
 
-## 🎨 Flujo de Datos (Data Flow)
+## Flujo de Datos (Data Flow)
 
 ### Creación de Cita
 ```
@@ -399,7 +417,7 @@ URL params → useEffect → setFilters()
 
 ---
 
-## 🔐 Seguridad en el Sistema
+## Seguridad en el Sistema
 
 ### Capas de Seguridad
 ```
@@ -438,7 +456,7 @@ URL params → useEffect → setFilters()
 
 ---
 
-## 🚀 Flujo de Despliegue (Deployment)
+## Flujo de Despliegue (Deployment)
 
 ```
 Desarrollo Local:
@@ -461,51 +479,22 @@ Producción (Futuro):
 
 ---
 
-## 📝 Resumen de Tecnologías por Capa
+## Resumen de Tecnologías por Capa
 
 | Capa | Tecnología | Propósito |
 |------|------------|-----------|
 | **Infraestructura** | Docker Compose | Orquestación de contenedores |
 | **Base de Datos** | PostgreSQL 15 | Almacenamiento persistente |
 | **Backend API** | Django REST Framework | API RESTful |
-| **Autenticación** | Simple JWT | Tokens JWT para auth |
+| **Autenticación** | Simple JWT + Token Blacklist | Tokens JWT con blacklist para logout |
+| **Documentación API** | drf-spectacular | Documentación OpenAPI 3.0 automática |
 | **Frontend UI** | Next.js 14 | Framework React SSR |
 | **Estilos** | Tailwind CSS | Estilos utility-first |
 | **HTTP Client** | Axios | Llamadas API con interceptores |
 | **Iconos** | Lucide React | Iconos SVG |
 | **Fechas** | date-fns | Manipulación de fechas |
+| **CI/CD** | GitHub Actions | Pipeline de integración continua |
 | **Tipado** | TypeScript 5 | Tipado estático frontend |
 
 ---
 
-## 🎯 Puntos Clave para Presentación
-
-### Arquitectura
-- **Monolítica separada**: Frontend y backend en contenedores separados
-- **REST API**: Comunicación HTTP/JSON entre frontend y backend
-- **JWT Authentication**: Tokens con refresh automático
-- **Docker**: Contenedores para reproducibilidad
-
-### Backend (Django)
-- **Model-View-Serializer**: Patrón estándar DRF
-- **ORM Django**: Abstracción SQL con validaciones
-- **SQL Nativo**: Para reportes complejos (performance)
-- **Management Commands**: Para tareas administrativas
-
-### Frontend (Next.js)
-- **App Router**: Next.js 13+ con file-based routing
-- **Client Components**: 'use client' para interactividad
-- **Axios Interceptors**: Manejo automático de JWT
-- **Responsive Design**: Tailwind CSS mobile-first
-
-### Seguridad
-- **JWT con Refresh**: Balance seguridad/usabilidad
-- **CORS**: Restricción de orígenes
-- **Validaciones**: En ambos lados (backend y frontend)
-- **Passwords**: Hasheadas con PBKDF2 (Django default)
-
-### Base de Datos
-- **PostgreSQL**: Base de datos relacional robusta
-- **Índices**: Para performance en filtros
-- **Migraciones**: Versionado de schema
-- **Foreign Keys**: Integridad referencial

@@ -1,12 +1,12 @@
 # Sistema de Gestión de Citas de Entrega
 
-Sistema full-stack para la gestión de citas de entrega con reportes en tiempo real de tiempos promedio por sublínea de producto.
+Sistema full-stack para la gestión de citas de entrega con reportes en tiempo real de tiempos promedio por línea de producto.
 
-## 📋 Descripción General
+## Descripción General
 
 Este sistema permite gestionar citas de entrega con seguimiento de estados, tiempos de entrega, y generación de reportes analíticos. Incluye autenticación de usuarios, CRUD completo de citas, y reportes con SQL nativo para análisis de rendimiento.
 
-## 🏗️ Arquitectura
+## Arquitectura
 
 ### Diagrama de Arquitectura
 
@@ -33,46 +33,42 @@ Este sistema permite gestionar citas de entrega con seguimiento de estados, tiem
 
 ### Diagrama Entidad-Relación
 
+```mermaid
+erDiagram
+    USER {
+        int id PK
+        string username
+        string email
+        string password
+        string first_name
+        string last_name
+        boolean is_staff
+        boolean is_superuser
+    }
+    APPOINTMENT {
+        uuid id PK
+        datetime scheduled_at
+        datetime delivered_at
+        string supplier
+        string product_line
+        string status
+        text observations
+        datetime created_at
+        datetime updated_at
+        int created_by FK
+        int updated_by FK
+    }
+    USER ||--o{ APPOINTMENT : "crea"
 ```
-┌─────────────────┐
-│     User        │
-├─────────────────┤
-│ id (PK)         │
-│ username        │
-│ email           │
-│ first_name      │
-│ last_name       │
-│ is_superuser    │
-│ is_staff        │
-└────────┬────────┘
-         │ 1
-         │
-         │ N
-┌────────▼──────────────────────────────────────────────────────┐
-│                    Appointment                                  │
-├───────────────────────────────────────────────────────────────┤
-│ id (PK)                    │ BIGINT                             │
-│ scheduled_at              │ DATETIME (indexed)                 │
-│ delivered_at              │ DATETIME (nullable)                │
-│ status                    │ VARCHAR(20) (indexed)              │
-│ provider                  │ VARCHAR(200) (indexed)             │
-│ product_line              │ VARCHAR(200) (indexed)             │
-│ sub_product_line          │ VARCHAR(200) (indexed)             │
-│ notes                     │ TEXT                               │
-│ created_at                │ DATETIME                           │
-│ updated_at                │ DATETIME                           │
-│ created_by (FK)           │ → User                             │
-│ updated_by (FK)           │ → User                             │
-└───────────────────────────────────────────────────────────────┘
 
 Indexes:
 - idx_scheduled_at: scheduled_at
 - idx_status_scheduled: status, scheduled_at
-- idx_provider_status: provider, status
-- idx_sub_product_status: sub_product_line, status
+- idx_supplier_status: supplier, status
+- idx_product_status: product_line, status
 ```
 
-## 🚀 Instalación y Ejecución
+## Instalación y Ejecución
 
 ### Requisitos Previos
 
@@ -153,7 +149,7 @@ npm install
 npm run dev
 ```
 
-## 🔐 Variables de Entorno
+## Variables de Entorno
 
 ### Backend (.env)
 
@@ -184,7 +180,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 NEXT_PUBLIC_API_URL=http://localhost:8000/api
 ```
 
-## 📚 Documentación de la API
+## Documentación de la API
 
 La API está documentada automáticamente con drf-spectacular (OpenAPI 3.0).
 
@@ -197,17 +193,18 @@ La API está documentada automáticamente con drf-spectacular (OpenAPI 3.0).
 #### Autenticación
 - `POST /api/auth/token/` - Login (obtener tokens JWT)
 - `POST /api/auth/token/refresh/` - Refrescar access token
+- `POST /api/auth/logout/` - Logout (invalidar refresh token)
 
 #### Citas
-- `GET /api/appointments/` - Listar citas (con filtros)
+- `GET /api/appointments/` - Listar citas (con filtros: supplier, product_line, status, date_from, date_to)
 - `POST /api/appointments/` - Crear nueva cita
 - `GET /api/appointments/{id}/` - Obtener detalle de cita
 - `PUT /api/appointments/{id}/` - Actualizar cita
-- `DELETE /api/appointments/{id}/` - Eliminar cita
+- `DELETE /api/appointments/{id}/` - Eliminar cita (soft-delete: status='Cancelada')
 - `GET /api/appointments/dashboard/` - Estadísticas del dashboard
-- `GET /api/appointments/report/` - Reporte de tiempos (requiere date_from y date_to)
+- `GET /api/appointments/report/` - Reporte de tiempos por línea de producto (date_from/date_to opcionales)
 
-## 🧪 Pruebas Unitarias
+## Pruebas Unitarias
 
 ### Ejecutar pruebas del backend:
 
@@ -222,9 +219,11 @@ python manage.py test appointments
 2. **Test de estado Entregada requiere delivered_at**: Verifica que el estado 'Entregada' requiere el campo delivered_at
 3. **Test de transición de estado inválida**: Verifica que no se permiten transiciones de estado inválidas
 4. **Test de autenticación requerida**: Verifica que usuarios no autenticados reciben 401
-5. **Test de endpoint de reporte**: Verifica que el reporte retorna los campos esperados
+5. **Test de endpoint de reporte sin fechas**: Verifica que el reporte retorna datos sin parámetros de fecha
+6. **Test de endpoint de reporte con fechas**: Verifica que el reporte filtra correctamente por rango de fechas
+7. **Test de soft-delete**: Verifica que eliminar una cita cambia el status a 'Cancelada'
 
-## 👥 Datos de Prueba
+## Datos de Prueba
 
 El sistema incluye un comando de seeding que crea automáticamente:
 
@@ -240,87 +239,31 @@ Para ejecutar el seeding:
 python manage.py seed_data
 ```
 
-## 🎨 Decisiones Técnicas y Justificaciones
-
-### Autenticación: JWT (JSON Web Tokens)
-
-**Justificación**:
-- Stateless: No requiere sesión en servidor, ideal para arquitecturas escalables
-- Seguridad: Tokens firmados criptográficamente con tiempo de expiración
-- Compatibilidad: Funciona perfectamente con SPA (Single Page Applications)
-- Refresh tokens: Permite renovación automática sin re-login
-
-### Base de Datos: PostgreSQL
-
-**Justificación**:
-- Robustez: ACID compliance para integridad de datos
-- Performance: Excelente para consultas complejas y joins
-- JSON support: Flexibilidad para futuras extensiones
-- Indexes avanzados: Soporte para índices compuestos optimizados
-
-### Frontend: Next.js App Router
-
-**Justificación**:
-- React Server Components: Mejor performance y SEO
-- File-based routing: Convención sobre configuración
-- Built-in optimization: Image optimization, font optimization
-- TypeScript support: Type safety en todo el stack
-
-### Reporte con SQL Nativo
-
-**Justificación**:
-- Performance: Consultas optimizadas directamente en DB
-- Complejidad: Agregaciones complejas más eficientes que ORM
-- Transparencia: Query visible y auditable
-- Evaluación: Requerimiento explícito de la prueba técnica
-
-### Índices en Base de Datos
-
-**Justificación**:
-- Optimización de filtros frecuentes: status, scheduled_at, provider, sub_product_line
-- Índices compuestos: Para queries combinadas (status + scheduled_at)
-- Performance: Mejora significativa en tiempos de respuesta
-
-## 📊 Supuestos Asumidos
-
-1. **Zona horaria**: Sistema configurado en America/Bogota (UTC-5)
-2. **Idioma**: Interfaz y documentación en español
-3. **Escalabilidad**: Arquitectura preparada para crecimiento horizontal
-4. **Seguridad**: JWT con refresh tokens para balance seguridad/usabilidad
-5. **Mobile-first**: Diseño responsive priorizando dispositivos móviles
-6. **Browser support**: Navegadores modernos (Chrome, Firefox, Safari, Edge)
-
-## 🔒 Seguridad
-
-- Contraseñas hasheadas con Django's default (PBKDF2)
-- JWT tokens con tiempo de expiración configurable
-- CORS configurado para orígenes específicos
-- Validaciones de negocio en servidor y cliente
-- SQL injection prevention (ORM + parameterized queries)
-- XSS prevention (React's built-in escaping)
-
-## 🎯 Características Implementadas
+## Características Implementadas
 
 ### Backend (Django REST Framework)
-- ✅ Autenticación JWT con refresh tokens
+- ✅ Autenticación JWT con refresh tokens y blacklist
 - ✅ CRUD completo de citas con validaciones
-- ✅ Reporte con SQL nativo optimizado
+- ✅ Reporte con SQL nativo optimizado (por línea de producto)
 - ✅ Dashboard con estadísticas
 - ✅ Documentación automática con drf-spectacular
 - ✅ Manejo de errores HTTP semántico
 - ✅ Índices en base de datos
-- ✅ Tests unitarios (5 tests)
+- ✅ Tests unitarios (7 tests)
 - ✅ Seed data command
+- ✅ Soft-delete (status='Cancelada' al eliminar)
+- ✅ Custom User model (AbstractUser)
 
 ### Frontend (Next.js App Router)
 - ✅ Login con manejo de errores visible
 - ✅ Dashboard con estadísticas visuales
-- ✅ Lista de citas con filtros y paginación
+- ✅ Lista de citas con filtros (dropdowns supplier/product_line) y paginación
 - ✅ Formulario crear/editar con validaciones
 - ✅ Reporte con gráfico de barras (Recharts)
 - ✅ Mobile-first responsive design
 - ✅ Protección de rutas
 - ✅ Manejo de estados de carga y errores
+- ✅ Logout con invalidación de refresh token
 - ✅ Interfaz consistente y usable
 
 ### DevOps
@@ -329,25 +272,8 @@ python manage.py seed_data
 - ✅ Variables de entorno configuradas
 - ✅ Migraciones automáticas
 - ✅ Datos de prueba incluidos
+- ✅ CI/CD con GitHub Actions (lint, test, build)
 
-### Bonus
-- ✅ Gráfico en reporte (Recharts) - +3 puntos
-- ⏳ CI/CD con linters configurados - +5 puntos (pendiente)
-
-## 📝 Notas Adicionales
-
-### Política sobre Uso de IA
-
-Se permitió el uso de IA (Claude) como herramienta de apoyo para:
-- Generación de código boilerplate
-- Sugerencias de mejores prácticas
-- Optimización de consultas SQL
-
-Sin embargo:
-- Todas las decisiones arquitectónicas son del desarrollador
-- El código es comprensible y autoexplicativo
-- Se puede explicar cada fragmento de código durante la revisión
-- No se abusó de IA sin comprensión real
 
 ### Buenas Prácticas Aplicadas
 
@@ -360,18 +286,3 @@ Sin embargo:
 - **Mobile-first**: Diseño responsive desde móvil hacia desktop
 - **Error handling**: Manejo explícito de errores en todos los niveles
 
-## 🤝 Cómo Contribuir
-
-1. Fork el repositorio
-2. Crear rama de feature (`git checkout -b feature/amazing-feature`)
-3. Commit cambios (`git commit -m 'Add amazing feature'`)
-4. Push a la rama (`git push origin feature/amazing-feature`)
-5. Abrir Pull Request
-
-## 📄 Licencia
-
-Este proyecto fue desarrollado como prueba técnica.
-
-## 👨‍💻 Autor
-
-Desarrollado como prueba técnica para evaluación de habilidades full-stack.

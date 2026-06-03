@@ -2,16 +2,29 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import api from '@/lib/axios'
 import { LogOut, LayoutDashboard, Calendar, BarChart3, Menu, X } from 'lucide-react'
 
 export default function Navbar() {
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
-    router.push('/login')
+  const handleLogout = async () => {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token')
+      
+      if (refreshToken) {
+        // Llamar al endpoint de logout para blacklisear el refresh token
+        await api.post('/appointments/logout/', { refresh: refreshToken })
+      }
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    } finally {
+      // Siempre limpiar los tokens y redirigir al login
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
+      router.push('/login')
+    }
   }
 
   return (

@@ -112,28 +112,12 @@ class Appointment(models.Model):
     def clean(self):
         """
         Validar reglas de negocio antes de guardar.
+        Nota: Las validaciones de campos (fecha pasada, delivered_at requerido, etc.)
+        se manejan en el serializer de DRF. Este método solo valida transiciones de estado.
         """
         from django.core.exceptions import ValidationError
         
-        # Regla 1: No se puede crear cita con fecha pasada
-        if self.scheduled_at and self.scheduled_at < timezone.now():
-            raise ValidationError({
-                'scheduled_at': 'No se puede crear una cita con fecha en el pasado.'
-            })
-        
-        # Regla 2: El estado 'Entregada' requiere delivered_at
-        if self.status == 'Entregada' and not self.delivered_at:
-            raise ValidationError({
-                'delivered_at': 'El campo delivered_at es requerido cuando el estado es "Entregada".'
-            })
-        
-        # Regla 3: delivered_at debe ser posterior a scheduled_at
-        if self.delivered_at and self.scheduled_at and self.delivered_at < self.scheduled_at:
-            raise ValidationError({
-                'delivered_at': 'La fecha de entrega debe ser posterior a la fecha programada.'
-            })
-        
-        # Regla 4: Validar transiciones de estado (solo para actualizaciones)
+        # Validar transiciones de estado (solo para actualizaciones)
         if self.pk:
             try:
                 old_status = Appointment.objects.get(pk=self.pk).status

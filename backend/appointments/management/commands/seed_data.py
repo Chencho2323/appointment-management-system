@@ -85,17 +85,21 @@ class Command(BaseCommand):
             if status == 'Entregada':
                 delivered_at = scheduled_at + timedelta(hours=2 + (i % 3))
             
-            appointment = Appointment.objects.create(
+            # Usar get_or_create para evitar duplicados si se corre el comando múltiples veces
+            appointment, created = Appointment.objects.get_or_create(
                 scheduled_at=scheduled_at,
-                delivered_at=delivered_at,
-                status=status,
                 supplier=suppliers[i % len(suppliers)],
                 product_line=product_lines[i % len(product_lines)],
-                observations=f'Observación de prueba para cita {i + 1}',
-                created_by=users[i % len(users)],
-                updated_by=users[i % len(users)],
+                defaults={
+                    'delivered_at': delivered_at,
+                    'status': status,
+                    'observations': f'Observación de prueba para cita {i + 1}',
+                    'created_by': users[i % len(users)],
+                    'updated_by': users[i % len(users)],
+                }
             )
-            appointments_created += 1
+            if created:
+                appointments_created += 1
 
         self.stdout.write(f'Created {appointments_created} appointments')
         self.stdout.write(self.style.SUCCESS('Database seeded successfully!'))

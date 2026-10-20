@@ -54,3 +54,6 @@ Thumbs.db
 .env.local
 .env.*.local
 backend/.env
+
+# Archivos de entorno locales del frontend
+frontend/.env

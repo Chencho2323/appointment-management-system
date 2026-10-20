@@ -1,5 +1,15 @@
 # Sistema de Gestión de Citas de Entrega
 
+<p>
+  <a href="https://github.com/Chencho2323/appointment-management-system/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/Chencho2323/appointment-management-system/ci.yml?branch=main&label=CI" alt="CI" />
+  </a>
+  <a href="https://github.com/Chencho2323/appointment-management-system/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/Chencho2323/appointment-management-system?label=licencia" alt="Licencia MIT" />
+  </a>
+  <img src="https://img.shields.io/github/languages/top/Chencho2323/appointment-management-system?label=lenguaje" alt="Lenguaje principal" />
+</p>
+
 Sistema full-stack para la gestión de citas de entrega con reportes en tiempo real de tiempos promedio por línea de producto.
 
 ## Descripción General

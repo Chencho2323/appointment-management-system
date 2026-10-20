@@ -42,11 +42,20 @@ jobs:
 
       - name: Lint — Flake8
         run: flake8 . --max-line-length=120 --exclude=migrations,venv
+
       - name: Run tests
         run: pytest
         env:
           DJANGO_SETTINGS_MODULE: config.settings
           DB_ENGINE: django.db.backends.postgresql
+          # El servicio de Postgres crea la base 'test_db'. Sin esto, la
+          # configuracion de settings.py usaria 'appointment_db' y los tests
+          # fallarian con 'connection refused'.
+          DB_NAME: test_db
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: localhost
+          DB_PORT: 5432
 
   frontend:
     runs-on: ubuntu-latest

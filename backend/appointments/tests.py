@@ -8,6 +8,7 @@ from datetime import timedelta
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from .models import Appointment
+from .serializers import AppointmentSerializer
 
 User = get_user_model()
 
@@ -34,26 +35,31 @@ class AppointmentModelTests(TestCase):
             updated_by=self.user
         )
 
-        with self.assertRaises(Exception):
-            appointment.full_clean()
-            appointment.save()
+        # La regla de 'fecha no pasada' la aplica el serializer de DRF
+        # (AppointmentSerializer.validate), no el modelo: el modelo delega
+        # las validaciones de campo. Se verifica contra el serializer.
+        serializer = AppointmentSerializer(data={
+            'scheduled_at': past_date.isoformat(),
+            'supplier': 'A',
+            'product_line': 'Camisetas',
+        })
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('scheduled_at', serializer.errors)
 
     def test_delivered_status_requires_delivered_at(self):
         """Prueba que el estado 'Entregada' requiere el campo delivered_at."""
         future_date = timezone.now() + timedelta(days=1)
-        appointment = Appointment(
-            scheduled_at=future_date,
-            status='Entregada',
-            delivered_at=None,
-            supplier='A',
-            product_line='Camisetas',
-            created_by=self.user,
-            updated_by=self.user
-        )
 
-        with self.assertRaises(Exception):
-            appointment.full_clean()
-            appointment.save()
+        # Igual que el caso anterior: la validacion vive en el serializer.
+        serializer = AppointmentSerializer(data={
+            'scheduled_at': future_date.isoformat(),
+            'status': 'Entregada',
+            'delivered_at': None,
+            'supplier': 'A',
+            'product_line': 'Camisetas',
+        })
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('delivered_at', serializer.errors)
 
     def test_invalid_status_transition(self):
         """Prueba que las transiciones de estado inválidas no están permitidas."""
@@ -247,8 +253,12 @@ class AppointmentAPITests(APITestCase):
         # Filtrar por estado
         response = self.client.get('/api/appointments/?status=Programada')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['status'], 'Programada')
+        # La API usa paginacion (PageNumberPagination), por lo que response.data
+        # es un diccionario con count/next/previous/results. Los elementos
+        # filtrados estan en 'results'.
+        self.assertEqual(response.data['count'], 1)
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]['status'], 'Programada')
 
     def test_dashboard_endpoint(self):
         """Prueba el endpoint de dashboard."""

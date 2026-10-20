@@ -1,7 +1,6 @@
 """
 Configuración de Django para el sistema de gestión de citas.
 """
-import os
 from pathlib import Path
 from datetime import timedelta
 from decouple import config

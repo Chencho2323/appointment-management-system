@@ -11,7 +11,7 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializador para el modelo User."""
-    
+
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name']
@@ -22,7 +22,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
     """Serializador para el modelo Appointment."""
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
     updated_by_username = serializers.CharField(source='updated_by.username', read_only=True)
-    
+
     class Meta:
         model = Appointment
         fields = [
@@ -92,7 +92,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
 class AppointmentListSerializer(serializers.ModelSerializer):
     """Serializador ligero para vistas de lista."""
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
-    
+
     class Meta:
         model = Appointment
         fields = [

@@ -8,14 +8,15 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework_simplejwt.tokens import RefreshToken
-from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiResponse
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 User = get_user_model()
 
 
 @extend_schema(
     summary='Registrar nuevo usuario operador',
-    description='Registra un nuevo usuario con rol de operador. Los operadores tienen permisos limitados en el sistema.',
+    description='Registra un nuevo usuario con rol de operador. Los operadores tienen permisos limitados en el'
+                'sistema.',
     request={
         'application/json': {
             'type': 'object',

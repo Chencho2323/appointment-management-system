@@ -34,7 +34,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary='Listar citas',
-        description='Retorna una lista de citas con filtros opcionales por fecha, proveedor, línea de producto y estado.',
+        description='Retorna una lista de citas con filtros opcionales por fecha, proveedor, línea de producto y'
+                    'estado.',
         parameters=[
             OpenApiParameter(
                 name='date_from',
@@ -110,7 +111,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary='Crear cita',
-        description='Crea una nueva cita con los datos proporcionados. Valida que la fecha programada no sea en el pasado y que el estado sea válido.',
+        description='Crea una nueva cita con los datos proporcionados. Valida que la fecha programada no sea en el'
+                    'pasado y que el estado sea válido.',
         request=AppointmentSerializer,
         responses={
             201: AppointmentSerializer,
@@ -167,7 +169,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary='Eliminar cita (soft-delete)',
-        description='Realiza un soft-delete de la cita cambiando su estado a "Cancelada". No permite cancelar citas ya canceladas o entregadas.',
+        description='Realiza un soft-delete de la cita cambiando su estado a "Cancelada". No permite cancelar citas ya'
+                    'canceladas o entregadas.',
         responses={
             204: OpenApiResponse(description='Cita cancelada exitosamente'),
             409: OpenApiResponse(description='No se puede cancelar una cita con estado Cancelada o Entregada'),
@@ -197,7 +200,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary='Obtener estadísticas del dashboard',
-        description='Retorna estadísticas resumidas del dashboard incluyendo total de citas, citas de hoy, y conteos por estado.',
+        description='Retorna estadísticas resumidas del dashboard incluyendo total de citas, citas de hoy, y conteos'
+                    'por estado.',
         responses={
             200: OpenApiResponse(description='Estadísticas del dashboard obtenidas exitosamente'),
             401: OpenApiResponse(description='No autenticado')
@@ -230,7 +234,8 @@ class AppointmentViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary='Generar reporte de tiempos de entrega',
-        description='Genera un reporte en tiempo real con consulta SQL nativa que calcula el tiempo promedio de entrega agrupado por línea de producto. Se puede filtrar por rango de fechas.',
+        description='Genera un reporte en tiempo real con consulta SQL nativa que calcula el tiempo promedio de entrega'
+                    'agrupado por línea de producto. Se puede filtrar por rango de fechas.',
         parameters=[
             OpenApiParameter(
                 name='date_from',

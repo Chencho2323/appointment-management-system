@@ -8,7 +8,7 @@ from .models import Appointment
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
     """Interfaz de admin para el modelo Appointment."""
-    
+
     list_display = [
         'id',
         'supplier',
@@ -18,7 +18,7 @@ class AppointmentAdmin(admin.ModelAdmin):
         'delivered_at',
         'created_by',
     ]
-    
+
     list_filter = [
         'status',
         'supplier',
@@ -26,20 +26,20 @@ class AppointmentAdmin(admin.ModelAdmin):
         'scheduled_at',
         'created_at',
     ]
-    
+
     search_fields = [
         'supplier',
         'product_line',
         'observations',
     ]
-    
+
     readonly_fields = [
         'created_at',
         'updated_at',
         'created_by',
         'updated_by',
     ]
-    
+
     fieldsets = (
         ('Información de la Cita', {
             'fields': (
@@ -67,7 +67,7 @@ class AppointmentAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-    
+
     def save_model(self, request, obj, form, change):
         """Establecer created_by y updated_by automáticamente."""
         if not change:

@@ -4,7 +4,7 @@ Comando de management para cargar datos de prueba en la base de datos.
 from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from datetime import timedelta, datetime
+from datetime import timedelta
 from appointments.models import Appointment
 
 User = get_user_model()
@@ -78,13 +78,13 @@ class Command(BaseCommand):
 
         for i in range(20):
             scheduled_at = base_date + timedelta(days=i % 10, hours=(i * 2) % 24)
-            
+
             # Establecer delivered_at para estado 'Entregada'
             status = statuses[i % len(statuses)]
             delivered_at = None
             if status == 'Entregada':
                 delivered_at = scheduled_at + timedelta(hours=2 + (i % 3))
-            
+
             # Usar get_or_create para evitar duplicados si se corre el comando múltiples veces
             appointment, created = Appointment.objects.get_or_create(
                 scheduled_at=scheduled_at,
@@ -103,7 +103,7 @@ class Command(BaseCommand):
 
         self.stdout.write(f'Created {appointments_created} appointments')
         self.stdout.write(self.style.SUCCESS('Database seeded successfully!'))
-        
+
         # Imprimir credenciales de prueba
         self.stdout.write('\n' + '=' * 50)
         self.stdout.write('TEST CREDENTIALS:')

@@ -42,7 +42,6 @@ jobs:
 
       - name: Lint — Flake8
         run: flake8 . --max-line-length=120 --exclude=migrations,venv
-
       - name: Run tests
         run: pytest
         env:
@@ -65,7 +64,7 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm install --include=dev --no-audit --no-fund
 
       - name: Lint — ESLint
         run: npm run lint

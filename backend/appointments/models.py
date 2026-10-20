@@ -4,8 +4,6 @@ Modelos para la aplicación de citas.
 import uuid
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
-from django.utils import timezone
 
 User = get_user_model()
 
@@ -58,7 +56,7 @@ class Appointment(models.Model):
         db_index=True,
         help_text="Estado actual de la cita"
     )
-    
+
     # Información de proveedor y producto
     supplier = models.CharField(
         max_length=1,
@@ -72,13 +70,13 @@ class Appointment(models.Model):
         db_index=True,
         help_text="Línea de producto"
     )
-    
+
     # Campos adicionales
     observations = models.TextField(
         blank=True,
         help_text="Observaciones adicionales sobre la cita"
     )
-    
+
     # Metadatos
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -116,7 +114,7 @@ class Appointment(models.Model):
         se manejan en el serializer de DRF. Este método solo valida transiciones de estado.
         """
         from django.core.exceptions import ValidationError
-        
+
         # Validar transiciones de estado (solo para actualizaciones)
         if self.pk:
             try:
@@ -127,7 +125,7 @@ class Appointment(models.Model):
                     'Entregada': [],  # Estado final
                     'Cancelada': [],  # Estado final
                 }
-                
+
                 if old_status != self.status and self.status not in valid_transitions.get(old_status, []):
                     raise ValidationError({
                         'status': f'Transición de estado no válida: {old_status} → {self.status}'

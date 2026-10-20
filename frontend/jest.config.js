@@ -8,10 +8,16 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
   testEnvironment: 'jest-environment-jsdom',
+  // El orden importa: Jest evalúa las claves en orden y usa la primera que
+  // coincide. Los mappers especificos deben ir antes del generico '@/(.*)',
+  // de lo contrario este ultimo captura tambien '@/lib/...' y '@/components/...'.
+  // '@/app/...' se resuelve contra la raiz del proyecto: el prefijo 'app/'
+  // ya viene incluido en la ruta de la importacion.
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/app/$1',
     '^@/lib/(.*)$': '<rootDir>/lib/$1',
     '^@/components/(.*)$': '<rootDir>/components/$1',
+    '^@/app/(.*)$': '<rootDir>/app/$1',
+    '^@/(.*)$': '<rootDir>/$1',
   },
   testMatch: [
     '**/__tests__/**/*.test.[jt]s?(x)',

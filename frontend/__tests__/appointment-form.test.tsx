@@ -51,6 +51,11 @@ describe('AppointmentFormPage', () => {
   it('muestra el título "Nueva Cita" cuando es una cita nueva', () => {
     render(<AppointmentFormPage />)
 
-    expect(screen.getByText(/nueva cita/i)).toBeInTheDocument()
+    // Se busca por rol de encabezado: el texto "Nueva Cita" también aparece
+    // en el subtítulo ("Registra una nueva cita de entrega"), por lo que un
+    // getByText plano encuentra dos elementos y falla por ambiguedad.
+    expect(
+      screen.getByRole('heading', { name: /nueva cita/i, level: 1 }),
+    ).toBeInTheDocument()
   })
 })

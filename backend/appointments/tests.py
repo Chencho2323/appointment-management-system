@@ -33,7 +33,7 @@ class AppointmentModelTests(TestCase):
             created_by=self.user,
             updated_by=self.user
         )
-        
+
         with self.assertRaises(Exception):
             appointment.full_clean()
             appointment.save()
@@ -50,7 +50,7 @@ class AppointmentModelTests(TestCase):
             created_by=self.user,
             updated_by=self.user
         )
-        
+
         with self.assertRaises(Exception):
             appointment.full_clean()
             appointment.save()
@@ -67,10 +67,10 @@ class AppointmentModelTests(TestCase):
             created_by=self.user,
             updated_by=self.user
         )
-        
+
         # Intentar transición de 'Entregada' a 'Programada' (inválido)
         appointment.status = 'Programada'
-        
+
         with self.assertRaises(Exception):
             appointment.full_clean()
             appointment.save()
@@ -104,7 +104,7 @@ class AppointmentAPITests(APITestCase):
             'product_line': 'Camisetas',
             'status': 'Programada',
         }
-        
+
         response = self.client.post('/api/appointments/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Appointment.objects.count(), 1)
@@ -114,7 +114,7 @@ class AppointmentAPITests(APITestCase):
         # Crear datos de prueba
         future_date = timezone.now() + timedelta(days=1)
         delivered_date = future_date + timedelta(hours=2)
-        
+
         Appointment.objects.create(
             scheduled_at=future_date,
             delivered_at=delivered_date,
@@ -124,18 +124,18 @@ class AppointmentAPITests(APITestCase):
             created_by=self.user,
             updated_by=self.user
         )
-        
+
         # Llamar endpoint de reporte
         date_from = (timezone.now() - timedelta(days=2)).date().isoformat()
         date_to = (timezone.now() + timedelta(days=2)).date().isoformat()
-        
+
         response = self.client.get(
             f'/api/appointments/report/?date_from={date_from}&date_to={date_to}'
         )
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsInstance(response.data, list)
-        
+
         if response.data:
             result = response.data[0]
             self.assertIn('product_line', result)
@@ -154,7 +154,7 @@ class AppointmentAPITests(APITestCase):
         # Crear datos de prueba
         future_date = timezone.now() + timedelta(days=1)
         delivered_date = future_date + timedelta(hours=2)
-        
+
         Appointment.objects.create(
             scheduled_at=future_date,
             delivered_at=delivered_date,
@@ -164,18 +164,18 @@ class AppointmentAPITests(APITestCase):
             created_by=self.user,
             updated_by=self.user
         )
-        
+
         # Llamar endpoint de reporte con fechas que incluyen la cita creada
         date_from = (timezone.now() - timedelta(days=2)).date().isoformat()
         date_to = (timezone.now() + timedelta(days=2)).date().isoformat()
-        
+
         response = self.client.get(
             f'/api/appointments/report/?date_from={date_from}&date_to={date_to}'
         )
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsInstance(response.data, list)
-        
+
         if response.data:
             result = response.data[0]
             self.assertIn('product_line', result)
@@ -194,11 +194,11 @@ class AppointmentAPITests(APITestCase):
             created_by=self.user,
             updated_by=self.user
         )
-        
+
         data = {
             'status': 'En Proceso',
         }
-        
+
         response = self.client.patch(f'/api/appointments/{appointment.id}/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         appointment.refresh_from_db()
@@ -215,7 +215,7 @@ class AppointmentAPITests(APITestCase):
             created_by=self.user,
             updated_by=self.user
         )
-        
+
         response = self.client.delete(f'/api/appointments/{appointment.id}/')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         # Verificar que la cita no se elimina físicamente, sino que cambia a 'Cancelada'
@@ -243,7 +243,7 @@ class AppointmentAPITests(APITestCase):
             created_by=self.user,
             updated_by=self.user
         )
-        
+
         # Filtrar por estado
         response = self.client.get('/api/appointments/?status=Programada')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -252,9 +252,7 @@ class AppointmentAPITests(APITestCase):
 
     def test_dashboard_endpoint(self):
         """Prueba el endpoint de dashboard."""
-        future_date = timezone.now() + timedelta(days=1)
-        today = timezone.now().date()
-        
+
         Appointment.objects.create(
             scheduled_at=timezone.now().replace(hour=10, minute=0),
             supplier='A',
@@ -263,7 +261,7 @@ class AppointmentAPITests(APITestCase):
             created_by=self.user,
             updated_by=self.user
         )
-        
+
         response = self.client.get('/api/appointments/dashboard/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('total_appointments', response.data)
@@ -280,7 +278,7 @@ class AppointmentAPITests(APITestCase):
             'status': 'Programada',
             'observations': 'Observaciones adicionales de prueba',
         }
-        
+
         response = self.client.post('/api/appointments/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Appointment.objects.first().observations, 'Observaciones adicionales de prueba')
@@ -300,6 +298,6 @@ class AppointmentAPITests(APITestCase):
             'product_line': 'Camisetas',
             'status': 'Entregada',
         }
-        
+
         response = self.client.post('/api/appointments/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

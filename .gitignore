@@ -32,11 +32,14 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# Next.js
+# Next.js / Node
+node_modules/
 .next/
 out/
 build/
 dist/
+npm-debug.log*
+yarn-error.log*
 
 # IDE
 .vscode/

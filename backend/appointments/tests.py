@@ -27,13 +27,6 @@ class AppointmentModelTests(TestCase):
     def test_cannot_create_appointment_with_past_date(self):
         """Prueba que no se puede crear una cita con fecha pasada."""
         past_date = timezone.now() - timedelta(days=1)
-        appointment = Appointment(
-            scheduled_at=past_date,
-            supplier='A',
-            product_line='Camisetas',
-            created_by=self.user,
-            updated_by=self.user
-        )
 
         # La regla de 'fecha no pasada' la aplica el serializer de DRF
         # (AppointmentSerializer.validate), no el modelo: el modelo delega

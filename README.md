@@ -363,3 +363,33 @@ Se asume que cuando el endpoint de reporte se llama sin parámetros de fecha (da
 - Visualización de tendencias históricas completas.
 - Análisis de todo el historial de entregas.
 - Flexibilidad para que el frontend decida si filtrar por fechas o mostrar todo el historial.
+
+## Estado y Calidad
+
+Verificado en el pipeline de GitHub Actions (rama `main`):
+
+| Componente | Verificación | Estado |
+|---|---|---|
+| Backend | Flake8 (máx. 120 columnas) | Sin hallazgos |
+| Backend | Pytest sobre PostgreSQL 15 | 15 pruebas, todas en verde |
+| Frontend | ESLint (`next lint`) | Sin hallazgos |
+| Frontend | Jest | 4 pruebas, todas en verde |
+| Frontend | Build de Next.js | Compila |
+
+El pipeline corre en cada push y en cada pull request hacia `main` y `dev`. La
+documentación interactiva de la API se genera con drf-spectacular en
+`/api/schema/swagger-ui/`.
+
+### Correcciones recientes
+
+- `flake8` se agregó a `requirements.txt`: el paso de lint fallaba porque la
+  dependencia no se instalaba.
+- `.flake8` tenía comentarios dentro de la lista `ignore`, sintaxis que Flake8 no
+  admite; los códigos se separaron y el motivo quedó documentado.
+- `jest.config.js` ordenaba mal los `moduleNameMapper`: el mapper genérico
+  `'^@/(.*)$'` capturaba `@/lib/...` y `@/components/...` antes que sus mappers
+  específicos, y duplicaba el prefijo `app/` en `@/app/...`.
+- El workflow creaba la base `test_db` mientras `settings.py` apuntaba a
+  `appointment_db`; los tests fallaban con `connection refused`.
+- `node_modules/` no estaba en `.gitignore`: 18.238 archivos llegaron al índice de
+  Git y el push fue rechazado por superar el límite de 100 MB por archivo.

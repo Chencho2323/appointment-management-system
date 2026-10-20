@@ -19,7 +19,7 @@
     "lucide-react": "^0.294.0",
     "date-fns": "^2.30.0",
     "clsx": "^2.0.0",
-    "tailwind-merge": "^2.1.0"
+    "tailwind-merge": "^3.7.0"
   },
   "devDependencies": {
     "@types/node": "^20",
